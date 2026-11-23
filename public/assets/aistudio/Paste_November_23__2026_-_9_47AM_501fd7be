@@ -1,0 +1,615 @@
+Professional Trading Journal & Trading Performance Operating System
+Platform: Google AI Studio — Build mode
+Application type: Full-stack responsive web application
+Execution model: Build the complete architecture and product in controlled, testable stages. Implement Stage 0 only on the first run.
+0. YOUR ROLE AND THE PRODUCT MISSION
+Act as the principal software architect, senior full-stack engineer, quantitative developer, financial-calculation specialist, database architect, trading analytics architect, UX/UI designer, AI engineer, cybersecurity engineer, and QA lead for this project.
+
+Design and build a professional-grade Personal Trading Journal and Trading Performance Operating System. It should combine the strongest useful capabilities of leading trading journals, professional trading analytics products, institutional trading workflows, and prop-firm dashboards, while providing a more coherent, configurable, reliable, and integrated experience.
+
+This is a real application, not a static mock-up, spreadsheet, landing page, or decorative dashboard. It must be designed to grow into a secure, multi-account, multi-broker, multi-prop-firm platform in which trades, accounts, execution records, playbooks, psychology, risk, compliance, analytics, reports, automation, and AI insights all use one consistent domain model.
+
+The long-term product flow is:
+
+WORKSPACES → PORTFOLIOS → ACCOUNTS → TRADES & EXECUTIONS → PLAYBOOKS → RISK & COMPLIANCE → PSYCHOLOGY → PERFORMANCE ANALYTICS → REPORTS → AI COACH → AUTOMATION
+
+The platform must be:
+- Professional, premium, modern, and suitable for serious trading use.
+- Modular, maintainable, extensible, and strongly typed.
+- Fully responsive, desktop-optimised, and mobile-friendly.
+- Fast, accessible, keyboard-friendly, and easy to navigate.
+- Configurable and customisable without changing source code for ordinary user-level changes.
+- Secure, privacy-conscious, and designed for user-level data isolation.
+- Persistent, backup-capable, and designed for reliable offline support and later synchronisation.
+- Honest about what is implemented, connected, calculated, estimated, unavailable, or awaiting user configuration.
+Do not simply copy another product's interface. Use familiar, proven trading-journal workflows but create a cohesive and distinctive trading-terminal experience.
+1. NON-NEGOTIABLE BUILD AND EXECUTION RULES
+1.1 Build progressively; do not attempt everything at once
+Architect the complete product from the beginning, but implement it in controlled stages. On this first run, implement Stage 0 only, as defined in Section 21. Do not attempt to fully implement every module in one generation. Do not start Stage 1 automatically.
+
+The future-stage requirements in this prompt are the product blueprint and acceptance roadmap. They are not permission to implement all of them during Stage 0.
+1.2 Preserve working code
+For every later stage, inspect the existing project before changing it. Understand its architecture, state model, database schema, services, components, routes, tests, and current implementation. Reuse working code. Do not rebuild the application from scratch, replace functional modules unnecessarily, or make broad unrelated refactors.
+1.3 No fake functionality
+Never present mock data, hard-coded numbers, simulated connections, decorative controls, or local-only data as real functionality. Do not claim authentication, cloud persistence, broker synchronisation, live prices, alerts, AI analysis, backups, or exports work unless they have actually been implemented and verified.
+
+Use clearly labelled demo data only in a separate Demo Mode or isolated demo workspace. Never mix demo records into a user's real workspace. If a future feature is not yet implemented, show a clear planned/unavailable state rather than a functional-looking button that does nothing.
+1.4 End-to-end completion standard
+A module is not complete because its page renders. It is complete only when its important workflows function end-to-end, data persists, validation works, errors are handled, calculations are verified, filters and relationships work, and relevant tests pass.
+
+For each stage, follow:
+
+INSPECT → PLAN THE LIMITED CHANGE → IMPLEMENT → BUILD → TEST → FIX → VERIFY → DOCUMENT → STOP
+
+Do not proceed to the next stage until explicitly instructed.
+1.5 Make uncertainty visible
+Do not silently infer missing trade information, instrument specifications, exchange rates, prop-firm rules, or market prices. Distinguish zero from unknown, blank, unavailable, not applicable, and not yet calculated. Do not silently substitute zero for missing financial data.
+2. GOOGLE AI STUDIO IMPLEMENTATION ENVIRONMENT
+Build a web application using the full-stack capabilities available in Google AI Studio Build mode.
+
+Preferred architecture:
+- Frontend: React with TypeScript, component-based architecture, responsive layouts, and a maintainable routing solution.
+- Backend: Node.js/TypeScript server runtime for protected operations, server-side business logic, secure API calls, and integrations.
+- Database and authentication: Use the Google AI Studio Firebase integration where available: Cloud Firestore for persistent application data and Firebase Authentication for real user authentication. Use supported Google sign-in and add other supported authentication methods only where they are actually available and configured.
+- Secrets: Store Gemini/API credentials and other secrets in the server-side secrets/environment facility. Never expose secrets, private credentials, service-account keys, or privileged tokens in browser code or client bundles.
+- Libraries: Prefer established, maintained packages for routing, form validation, charts, date/time handling, decimal arithmetic, tables, and testing. Keep dependencies purposeful and avoid unnecessary complexity.
+Before implementation, inspect the actual AI Studio project environment and available integrations. Use the supported stack rather than inventing unavailable services. If Firebase provisioning is offered, configure it and implement real authentication, Firestore persistence, and appropriate security rules. Do not silently fall back to fake authentication, mock APIs, or localStorage presented as cloud persistence. If a required cloud service cannot be provisioned, clearly identify the blocker and create only the safe adapter/interface that can genuinely be implemented.
+
+Use a repository/data-access abstraction so the application is not tightly coupled to one persistence provider. Design the data layer to support IndexedDB-based offline caching and queued synchronisation in a later stage. Browser local storage may store small preferences, but it must not be the only durable store for trading records.
+
+Prepare the project for later PWA and Cloud Run deployment, but do not spend Stage 0 implementing all offline and deployment features.
+3. ARCHITECTURE AND ENGINEERING STANDARDS
+Use domain-driven, feature-oriented modular architecture with strict separation of concerns:
+
+UI / Components → Application Use Cases → Domain Services → Repository Interfaces → Persistence / External Adapters
+
+Core principles:
+1. TypeScript strict mode wherever supported; use explicit types and avoid any unless justified.
+2. Keep UI components focused on rendering and user interaction. Put financial calculations and business rules in reusable domain services.
+3. Use one source of truth for application state and clear ownership of server state, client state, and persisted preferences.
+4. Use repositories for data access and adapters for external services.
+5. Centralise validation, date/time handling, money handling, calculations, permissions, and error handling.
+6. Use stable IDs, explicit relationships, schema/version management, and migration strategies.
+7. Use pagination, indexed queries, and efficient loading for large trade histories.
+8. Make all critical business logic independently testable without rendering the UI.
+9. Avoid unnecessary duplication, premature abstraction, and giant components/files.
+10. Document important domain decisions and financial conventions.
+Suggested project organisation (adapt to the actual framework where appropriate):
+- src/app — app shell, routing, providers, layouts
+- src/features/auth
+- src/features/workspaces
+- src/features/portfolios
+- src/features/accounts
+- src/features/trades
+- src/features/executions
+- src/features/playbooks
+- src/features/risk
+- src/features/prop-firms
+- src/features/analytics
+- src/features/psychology
+- src/features/reports
+- src/features/import-export
+- src/features/ai-coach
+- src/features/automation
+- src/features/settings
+- src/components — shared UI components
+- src/domain — domain models, rules, and calculation contracts
+- src/services — application services
+- src/repositories — repository interfaces and implementations
+- src/integrations — broker, platform, market-data, and notification adapters
+- src/lib — shared utilities
+- src/types
+- src/tests
+- server — server routes/services where appropriate
+- docs — architecture, data dictionary, calculations, testing, and roadmap
+4. PRODUCT STRUCTURE AND NAVIGATION
+Create a polished application shell with:
+- Responsive collapsible sidebar/navigation.
+- Top bar with workspace/account context, global search entry point, notifications, and user profile/settings.
+- Workspace and account switchers.
+- Main content area with clear page titles, breadcrumbs where useful, and consistent spacing.
+- Global search and command-palette architecture for future use.
+- Desktop navigation optimised for dense trading information and mobile navigation that remains practical on small screens.
+- Loading, empty, error, success, offline, and permission-denied states.
+Establish routes for these modules, but only implement the current stage's routes:
+1. Overview / Dashboard
+2. Workspaces & Portfolios
+3. Accounts
+4. Trade Journal
+5. Playbooks & Setups
+6. Risk Management
+7. Prop-Firm Manager
+8. Performance Analytics
+9. Psychology & Behaviour
+10. Reports
+11. Import / Export
+12. AI Trading Coach
+13. Goals, Automation & Notifications
+14. Integrations
+15. Settings & Customisation
+Do not let unimplemented routes masquerade as working modules.
+5. CORE DOMAIN MODEL AND RELATIONSHIPS
+Design a unified, versionable domain model. At minimum, allow for these entities and relationships:
+- User
+- UserProfile
+- Workspace
+- WorkspaceMembership / Role
+- Portfolio
+- Account
+- Broker
+- TradingPlatform
+- PropFirm
+- PropFirmRuleSet
+- PropFirmRule
+- Challenge / ChallengePhase
+- CashTransaction (deposit, withdrawal, payout, fee, adjustment)
+- Instrument / InstrumentSpecification
+- Currency / FXRateSnapshot
+- Trade (the journal-level trading idea or position)
+- Order (where order-level capture is supported)
+- TradeExecution / Fill
+- PlannedTarget (one-to-many dynamic take-profit levels)
+- Exit (one-to-many actual partial or final exits)
+- StopLossEvent / TradeManagementEvent
+- MarketContext
+- Playbook
+- Setup
+- Checklist / ChecklistItem / ChecklistResult
+- Confluence
+- PsychologyEntry
+- MistakeCategory / MistakeRecord
+- Tag
+- CustomFieldDefinition / CustomFieldValue
+- TradeTemplate
+- Attachment / ChartLink
+- Goal / Milestone
+- Dashboard / DashboardWidget / DashboardLayout
+- SavedView / SavedFilter
+- Report / ReportRun
+- ImportJob / ImportMapping / ImportError
+- Integration / IntegrationConnection
+- AutomationRule
+- Notification / NotificationPreference
+- AIInsight / AIReview
+- AuditLog
+Use stable identifiers and explicit foreign-key-like relationships. Scope private data to the authenticated user and workspace. Where appropriate, store a workspace ID and owner/user ID on records and enforce access in backend/database security rules, not merely by hiding UI elements.
+
+A trade should be able to connect to an account, portfolio, broker/platform, prop-firm challenge, instrument, playbook, setup, multiple entries/fills, multiple planned targets, multiple actual exits, market context, risk plan, psychology, mistakes, comments, screenshots, tags, and custom fields.
+
+Do not duplicate derived values as independent sources of truth. Store source inputs and use central services to derive metrics. Persist important snapshots where historical reproducibility is needed, and document why they are snapshots.
+6. WORKSPACES, PORTFOLIOS, ACCOUNTS AND CASH MOVEMENTS
+Support multiple workspaces and portfolios where useful, and multiple trading accounts per workspace. Accounts must be independently filterable and analysable, with optional consolidated portfolio views.
+
+Support account types:
+- Personal Live
+- Personal Demo
+- Prop Evaluation / Challenge
+- Prop Verification
+- Funded Prop Account
+- Backtest
+- Forward Test
+- Paper Trading
+- Custom
+Support account statuses such as Active, Paused, Passed, Failed, Breached, Archived, and Custom.
+
+Each account should support configurable fields including:
+- Account name and identifier/number (sensitive values should be protected and not unnecessarily exposed).
+- Account type and status.
+- Broker, prop firm, platform, and portfolio.
+- Base currency and timezone.
+- Starting balance and opening date.
+- Current balance/equity snapshots and reconciliation notes.
+- Account phase/challenge phase.
+- Profit target in amount and/or percentage.
+- Maximum daily loss in amount and/or percentage.
+- Maximum overall loss/drawdown in amount and/or percentage.
+- Static or trailing drawdown configuration.
+- Minimum/maximum trading days where applicable.
+- Consistency, news, overnight, weekend, or other custom rule references.
+- Notes, tags, and custom metadata.
+Support account grouping, comparison, activation/deactivation, archiving, editing, and selection. Provide a clear account overview and account health foundation.
+
+Track cash movements separately from trade P&L, including deposits, withdrawals, prop-firm payouts, fees, adjustments, and transfers. Payout records should support gross amount, split percentage, net received, payout date, certificate/document attachment, account, and notes.
+
+Do not make current balance an independently editable number that silently conflicts with the ledger. Define a documented reconciliation approach using starting balance, trade cash flows, deposits/withdrawals, payouts, fees, adjustments, and verified balance snapshots. Make it possible to record and explain a manual reconciliation.
+7. ADVANCED TRADE JOURNAL — COMPLETE PRODUCT REQUIREMENTS
+The journal is the core of the platform. Support manual entry first, with a robust model for future CSV imports and broker/platform integrations. Support multiple accounts, brokers, prop firms, portfolios, strategies, and asset classes.
+7.1 Trade capture principles
+- Every journal capture field must be optional by default, editable, searchable, filterable, sortable, and configurable.
+- Allow incomplete/draft trades and quick capture. Only technical identifiers, ownership/security metadata, and fields essential to a specific operation should be mandatory.
+- A missing field must remain null/unknown rather than being silently set to zero.
+- Clearly indicate when a metric cannot be calculated because its required source data is missing.
+- Allow users to create, edit, reorder, hide, show, group, and configure fields and sections.
+- Support reusable trade templates and dynamic user-defined fields.
+- Keep planned trade information separate from actual executed information.
+7.2 Identification and account context
+Support:
+- Trade ID and optional external/broker ticket IDs.
+- Trade date and entry date/time; exit date/time.
+- Session: Asia, London, New York, overlap, or custom.
+- Time zone (store timestamps consistently, preferably UTC, while retaining the display/input timezone).
+- Workspace, portfolio, account, broker, prop firm, challenge, and challenge phase.
+- Account balance/equity snapshot at entry where available.
+- Asset/pair/instrument, symbol, asset class, base/quote currency, and instrument specification reference.
+- Direction: Buy/Long or Sell/Short.
+- Timeframe as a multi-select field.
+- Strategy, playbook, setup, and tags.
+7.3 Market context and conditions
+Provide configurable multi-select fields with these initial options:
+
+Bullish; Bearish; Neutral; Trending; Range-Bound; Consolidation; Choppy; Breakout; Breakdown; Reversal; Pullback; High Volatility; Low Volatility; Volatility Expansion; Volatility Contraction; Transitional; Pre-Market; Market Open; Session Overlap; Gap Opening; News Event; Economic Data; Central Bank Event; Earnings Report; Geopolitical Event; Risk-On; Risk-Off; Liquidity Sweep; Correlated Assets; Inter-Market Divergence; Commodity / Macro Influence.
+
+Also allow optional structured notes for higher-timeframe context, trend, volatility, liquidity, macro environment, correlated assets, news/event context, and the trader's market thesis.
+7.4 Entry and position information
+Support:
+- Entry date/time (including hh:mm:ss precision where entered).
+- Entry method/type and entry rationale.
+- Entry price and optional multiple entry fills/scale-ins.
+- Buy/Sell direction.
+- Volume, lot size, units, quantity, or contracts, with instrument-aware units.
+- Leverage and margin where known.
+- Initial planned risk amount and risk percentage.
+- Entry confidence and planned reward/risk.
+- Confirmation signals and confluences.
+7.5 Stop loss and trade management
+Stop-loss data should support optional:
+- Stop reason/rationale.
+- Initial stop price.
+- Stop distance in pips/ticks/points.
+- Estimated risk in account currency and percentage.
+- Stop adjustments and timestamps.
+- Moved-to-break-even, trailing stop, partial risk reduction, or stop removal events.
+- Notes explaining each meaningful management decision.
+Keep the original planned stop and risk distinct from later stop changes. Preserve the history of material stop adjustments when captured.
+7.6 Dynamic multiple take-profit levels
+Support any number of planned targets (TP1, TP2, TP3, and onward), not a fixed three-target limit. Each target should optionally store:
+- Target number/order and target rationale.
+- Target price.
+- Target pips/ticks/points.
+- Target amount and percentage.
+- Planned R multiple / reward-to-risk.
+- Planned volume or percentage of position to close.
+- Target status (planned, reached, missed, cancelled, modified, or custom).
+7.7 Actual exits and partial closes
+Model actual exits separately from planned take-profit targets. Support any number of partial or final exits, each with:
+- Exit date/time with timezone.
+- Exit price.
+- Exit volume/lot size/quantity.
+- Exit reason.
+- Outcome label (Win, Partial Win, Breakeven, Loss, Partial Loss, or Custom).
+- Realised pips/ticks/points.
+- Realised gross P&L in account currency and percentage where calculable.
+- Realised net P&L where costs can be allocated accurately.
+- Realised R multiple.
+- Holding duration.
+- Notes and related target/management event where applicable.
+A trade may remain open after partial exits. Do not mark a position fully closed until the remaining quantity is zero or the user explicitly reconciles it. Weighted average exit price and realised performance must be calculated from actual fills/exits, not from planned targets.
+7.8 Costs and execution quality
+Support optional:
+- Commission.
+- Swap/financing.
+- Fees and rebates.
+- Spread.
+- Slippage.
+- Other costs.
+- Execution venue/platform and order type.
+Allow costs to be associated with the trade or allocated to fills/exits where the source data permits. Avoid double-counting fees imported at both trade and execution level.
+7.9 Performance and excursions
+Support calculated or manually supplied values for:
+- Gross P&L amount and percentage.
+- Net P&L amount and percentage.
+- Realised and, only when a trustworthy mark is available, floating/unrealised P&L.
+- Pips/ticks/points.
+- Planned risk, initial R, achieved R, and reward/risk.
+- Maximum Adverse Excursion (MAE): price, pips/ticks, amount, percentage, and R where calculable.
+- Maximum Favourable Excursion (MFE): price, pips/ticks, amount, percentage, and R where calculable.
+- Entry efficiency and exit efficiency where enough price-path data exists.
+- Holding duration.
+- Win, loss, or breakeven classification.
+Do not fabricate MFE/MAE from entry and exit prices alone. These require the price path or a reliable manually entered value.
+7.10 Psychology, notes, rating and media
+Provide multi-select emotional/psychological state options initially including:
+
+Calm; Focused; Confident; Patient; Disciplined; Detached; Curious; Alert; Cautious; Reflective; Uncertain; Nervous; Hesitant; Doubtful; Hopeful; Relieved; Fearful; Anxious; FOMO; Greedy; Revenge; Frustrated; Angry; Panicked; Overconfident; Impulsive; Impatient; Bored; Distracted; Apathetic; Regretful; Self-Blaming; Defensive; Euphoric; Excited; Mentally Fatigued; Emotionally Drained; Overwhelmed; Tilted.
+
+Also support optional numeric or qualitative confidence, stress, patience, discipline, focus, decision quality, and rule-adherence measures. Allow configurable mistake categories and free-text comments for mistakes, lessons, strengths, observations, and post-trade review.
+
+Support configurable trade rating/quality scores and rubrics. Keep setup quality, execution quality, risk quality, process/rule adherence, psychology/process quality, and profitability as distinct dimensions. A profitable outcome must not automatically mean a high-quality trade.
+
+Support chart links for:
+- Higher-timeframe chart.
+- Confluence/context chart.
+- Entry chart.
+- Outcome/exit chart.
+Support screenshot and file attachments with safe validation, size limits, and secure access controls.
+8. CENTRAL FINANCIAL CALCULATION AND LEDGER ENGINE
+This is a critical subsystem. Implement it as a shared, independently testable domain service. Dashboards, analytics, risk, prop-firm rules, reports, and AI must consume the same verified calculations. Never implement separate formulas in individual pages.
+
+At minimum, design and eventually implement calculations for:
+- Gross P&L and net P&L.
+- Realised and floating/unrealised P&L.
+- P&L percentage and return on capital.
+- Position size, quantity, contracts, and lot size.
+- Pip/tick/point distance and value.
+- Risk amount and risk percentage.
+- Planned reward/risk, initial R, and achieved R.
+- Weighted average entry and exit prices.
+- Partial-exit allocation.
+- Commission, swap, fees, spread, and slippage.
+- Margin and leverage.
+- Balance, equity, available margin, and exposure where source data allows.
+- Drawdown, daily loss, weekly loss, monthly loss, and trailing drawdown.
+- Expectancy, win rate, average win/loss, payoff ratio, and profit factor.
+8.1 Financial accuracy requirements
+1. Use decimal-safe arithmetic (a suitable decimal library or integer minor units where appropriate) for currency, prices, quantities, and fees. Avoid relying on binary floating-point arithmetic for money-critical calculations.
+2. Use instrument-specific specifications: contract size, tick size, pip size, tick/pip value, quote currency, lot conventions, and asset-class rules. Do not assume every FX pair, gold symbol, index, crypto asset, or futures contract has identical specifications.
+3. Support account base currency and instrument profit currency. Convert only using a known historical/current FX rate, a documented user-provided rate, or an explicitly selected source. If conversion data is missing, show the native-currency amount and mark account-currency conversion unavailable.
+4. Keep gross P&L, net P&L, commissions, swaps, fees, and cash movements distinct and reconcile them consistently. Do not double-count transaction costs.
+5. Distinguish trade P&L from deposits, withdrawals, transfers, payouts, and manual account adjustments.
+6. Distinguish balance from equity. Do not show real-time floating P&L unless a connected/verified price source or user-entered mark exists.
+7. Document the formula and convention used for each metric, including denominator, time zone, day boundary, treatment of breakeven trades, and treatment of fees.
+8. Where data is incomplete, return an explicit unavailable/insufficient-data result, not a guessed value or zero.
+9. Make rounding and display precision instrument- and currency-aware. Store sufficient precision and round only at appropriate boundaries.
+10. Preserve original imported values and source identifiers for auditability.
+8.2 Metric definitions and testability
+Document consistent definitions for win rate, expectancy, average win, average loss, payoff ratio, profit factor, drawdown, recovery factor, R multiple, and return percentage. Make the treatment of breakeven trades configurable or clearly stated. Time-series metrics such as Sharpe and Sortino must use a documented return series and sampling/annualisation convention; do not calculate them from arbitrary per-trade values without explaining the method.
+
+Create deterministic unit tests for long and short positions, multiple instruments, currency conversion, partial exits, multiple entries, fees, swaps, winning/losing/breakeven trades, open positions, missing inputs, zero/negative edge cases, and account reconciliation.
+9. DASHBOARD AND TRADING CONTROL CENTRE
+Build a highly interactive, data-driven dashboard using only persisted, correctly scoped data and central calculation services.
+
+Core KPI cards should be configurable and may include:
+- Starting balance, current balance, equity, and available margin where known.
+- Gross P&L, net P&L, realised P&L, and floating P&L where verified.
+- Trade count, win rate, loss rate, breakeven rate.
+- Average win, average loss, largest win, largest loss.
+- Expectancy, profit factor, average R, payoff ratio.
+- Maximum and current drawdown.
+- Consecutive wins/losses and trading streaks.
+- Average holding time.
+- Recovery factor and other risk-adjusted metrics when statistically appropriate.
+- Prop-firm challenge progress and account health where configured.
+Provide daily, weekly, monthly, quarterly, yearly, and lifetime views. Filters should include workspace, portfolio, account, date range, strategy, playbook, setup, instrument, asset class, timeframe, session, direction, market condition, psychology tag, and mistake category where applicable.
+
+Visualisations should include, when supported by sufficient data:
+- Equity curve and balance curve.
+- Daily/weekly/monthly P&L.
+- Drawdown curve.
+- Trading calendar and calendar heatmap.
+- Win/loss and R distributions.
+- Session/day/time heatmaps.
+- Strategy, setup, and playbook comparisons.
+- Trade-duration distributions.
+- Scatter plots, histograms, risk matrices, correlation matrices, and cohort analysis where analytically meaningful.
+Support drill-down from KPI/chart/data point to the filtered trades behind it. All widgets must respond consistently to the same filter context. Users should eventually be able to add, remove, rearrange, resize, configure, and save widgets and dashboard layouts. Persist layout preferences per user/workspace.
+
+Avoid charts that are merely decorative or imply precision unsupported by the data.
+10. PLAYBOOK, SETUP AND TRADE-QUALITY ENGINE
+Build an advanced playbook system with:
+- Playbook and setup libraries.
+- Setup description, markets/instruments, timeframe, session, market conditions, and active/inactive state.
+- Entry model, exit model, and trade-management rules.
+- Required and optional entry checklists.
+- Confirmation and confluence checklists.
+- Rule checklists and weighted criteria.
+- Invalidation rules and no-trade conditions.
+- Screenshot examples, notes, and tags.
+- Historical performance and statistics linked to actual trades.
+Support configurable checklist items with required/optional status, weight, pass/fail/not-applicable state, score contribution, and rule-violation impact.
+
+Create separate scores for setup quality, execution quality, risk management, rule adherence, and psychology/process. Profitability must be shown separately from process quality. Support user-defined grading rubrics and distinguish AI-generated suggestions from deterministic checklist scores.
+
+AI setup grading or probability scoring must be clearly labelled as model-derived or heuristic unless validated statistical evidence exists. Show sample size and uncertainty; never present an unsupported score as a proven probability.
+11. RISK MANAGEMENT CENTRE
+Create a dedicated risk module using the shared calculation engine.
+
+Include:
+- Risk-per-trade calculator.
+- Position-size and lot-size calculator.
+- Stop-loss distance and reward/risk calculator.
+- Margin and leverage calculator.
+- Daily, weekly, and monthly risk budgets.
+- Maximum risk per trade and per account.
+- Maximum simultaneous exposure.
+- Correlated exposure monitoring where correlation data is available.
+- Current, maximum, and trailing drawdown monitoring.
+- Remaining risk capacity and account-health indicators.
+- User-configurable trading rules and warning thresholds.
+Support Healthy, Warning, and Critical states with configurable thresholds. Surface relevant warnings in account, trade-entry, and dashboard workflows. Clearly identify whether a calculation uses realised P&L, unrealised P&L, balance, equity, or another basis.
+12. CONFIGURABLE PROP-FIRM RULE ENGINE
+Build a rules engine that can represent different firms and rule variations without hard-coding one firm's policies.
+
+Support rule sets, rule versions, challenge phases, effective dates, and account-specific overrides. Rule types may include:
+- Profit target.
+- Daily loss limit.
+- Overall maximum loss/drawdown.
+- Static or trailing drawdown.
+- Consistency rules.
+- Minimum/maximum trading days.
+- News restrictions.
+- Overnight/weekend holding restrictions.
+- Position-size or exposure restrictions.
+- Risk-per-trade restrictions.
+- Payout and scaling rules.
+- Custom conditions.
+Each rule should store its name, description, threshold, unit, calculation method, day-reset/timezone definition, warning threshold, breach threshold, severity, enabled state, effective dates, version, source/notes, and any relevant exceptions.
+
+Create challenge dashboards showing progress, risk buffer, compliance status, trading days, profit target progress, warnings, breaches, scaling milestones, payout status, and side-by-side account comparisons.
+
+Never fabricate or assume current prop-firm rules. Provide editable rule templates only when clearly labelled as user-configurable examples. Users must be able to verify and update rule details. The engine must clearly show which rule definition and version was used for a compliance result.
+13. ADVANCED PERFORMANCE ANALYTICS
+Build analytics by:
+- Workspace, portfolio, account, broker, prop firm.
+- Strategy, playbook, setup, and checklist grade.
+- Instrument, asset class, and direction.
+- Timeframe, session, time of day, day of week, month, quarter, and year.
+- Market context/condition and volatility state.
+- Risk amount/percentage and R multiple.
+- Psychology/emotional state and discipline/rule adherence.
+- Mistake category and execution characteristic.
+Metrics may include:
+- Win/loss/breakeven rates.
+- Gross/net P&L.
+- Expectancy, average R, average win/loss, payoff ratio, and profit factor.
+- Trade frequency, holding time, streaks, and consistency.
+- Maximum drawdown, current drawdown, recovery factor, and risk of ruin.
+- Sharpe, Sortino, Calmar, and Ulcer Index when the data and assumptions support them.
+- MFE, MAE, entry efficiency, and exit efficiency when price-path data exists.
+- Winning-vs-losing trade comparisons.
+- Setup/strategy edge analysis and sample-size reporting.
+Support distributions, histograms, heatmaps, scatter plots, equity/drawdown analysis, calendar analytics, strategy/playbook comparisons, correlation analysis, and drill-down to underlying trades.
+
+Monte Carlo simulation, probability analysis, and equity scenario modelling may be added after the core dataset and metric definitions are verified. Clearly document assumptions, sample size, resampling method, confidence limitations, and scenarios. Label them as scenarios/estimates, not guaranteed forecasts or predictions.
+
+Do not display a metric when its required sample size or data quality is inadequate. Explain why it is unavailable.
+14. PSYCHOLOGY, BEHAVIOUR AND MISTAKE ANALYTICS
+Create a dedicated trading psychology and behaviour module supporting:
+- Emotional-state tracking.
+- Confidence, stress, patience, focus, discipline, and decision-quality tracking.
+- Rule adherence and trading-habit observations.
+- Mistake journal with configurable categories.
+- Behavioural patterns and mood/calendar views.
+- Pre-trade and post-trade reflection where configured.
+Initial mistake categories may include early entry, late entry, oversized position, moved stop, removed stop, premature exit, revenge trade, FOMO, overtrading, ignored setup rule, ignored risk rule, traded outside plan, and custom categories.
+
+Analyse win rate, average R, P&L, mistake frequency, financial impact of mistakes, performance after consecutive losses, and rule adherence by emotional state or behaviour where enough data exists.
+
+Keep this module focused on trading behaviour and self-observation. Do not diagnose mental-health conditions or present psychological conclusions as medical assessments.
+15. IMPORT, EXPORT AND DATA MANAGEMENT
+Implement CSV import first, with a robust workflow:
+1. Upload/select file.
+2. Detect file structure and likely schema.
+3. Preview source rows.
+4. Map source columns to journal fields.
+5. Configure date, time, timezone, decimal, delimiter, and currency formats.
+6. Validate types and relationships.
+7. Detect duplicates using configurable matching criteria and external IDs where available.
+8. Show valid, invalid, duplicate, and warning records before import.
+9. Import with a clear summary and import history.
+10. Preserve source values and error details.
+11. Provide safe rollback/undo where feasible.
+Support CSV export, JSON backup/restore, and later spreadsheet-compatible exports. Do not silently discard malformed rows or overwrite records without a clear user decision. Build adapter interfaces for future MetaTrader, cTrader, broker, and platform imports; do not claim direct connectivity unless an actual supported API/file integration has been implemented and tested.
+
+Support backups, data recovery, versioned schemas, and audit logs for important account, trade, import, rule, and configuration changes.
+16. PROFESSIONAL REPORTING
+Use the same central analytics services as dashboards. Support:
+- Daily, weekly, monthly, quarterly, yearly, and custom-period reports.
+- Account and portfolio reports.
+- Trade-history reports.
+- Strategy, setup, and playbook reports.
+- Risk and drawdown reports.
+- Prop-firm challenge/compliance reports.
+- Psychology and mistake reports.
+- Broker summaries.
+- Payout/cash-flow summaries.
+- Executive summaries.
+- Tax-data summaries where appropriate (informational only; do not provide legal or tax advice).
+Support CSV, JSON, spreadsheet-compatible formats, print-ready views, and PDF/Excel generation only where the environment supports reliable, verified generation. Report filters must reconcile with dashboard figures and show their date range, timezone, account scope, currency, and calculation conventions.
+17. AI INTELLIGENCE AND TRADING COACH
+Build the AI layer only after reliable structured data and central calculations exist. Keep it behind a service abstraction and server-side secret handling.
+
+Potential capabilities:
+- Trade review and journal summarisation.
+- Daily, weekly, and monthly reviews.
+- Mistake and behaviour pattern analysis.
+- Strategy, setup, playbook, risk, and execution reviews.
+- Identification of possible statistical edges for further investigation.
+- Natural-language questions about the user's own journal.
+- Personalised process-improvement suggestions.
+- Report summaries and comparison explanations.
+Example questions:
+- Which setups have performed best over the selected period?
+- Which mistakes have had the greatest measured impact?
+- Which sessions and market contexts have produced the strongest results?
+- How does my rule adherence relate to performance?
+- What patterns appear after consecutive losses?
+- What changed between this month and last month?
+- Which findings have sufficient sample size, and which are inconclusive?
+AI safety and accuracy requirements:
+1. Ground insights in the authenticated user's authorised records and verified calculation outputs.
+2. Never invent trades, statistics, sample sizes, prices, or performance outcomes.
+3. Clearly separate Observed Data, Calculated Metric, Interpretation, and Recommendation.
+4. Show the selected date range, account scope, sample size, and relevant filters.
+5. State when data is insufficient or inconclusive.
+6. Do not claim causation from simple correlations.
+7. Do not guarantee financial outcomes or provide false certainty.
+8. Do not autonomously place, modify, or execute trades.
+9. Never expose one user's data to another user or send private records to an external model without the configured, disclosed data flow.
+10. Keep an appropriate history of generated reviews and the data scope used to produce them.
+18. AUTOMATION, GOALS, ALERTS AND NOTIFICATIONS
+Create a configurable automation model based on:
+
+WHEN [event/condition] IS TRUE → THEN [permitted action]
+
+Potential triggers/actions include:
+- Risk-budget or daily-loss warnings.
+- Drawdown and prop-firm rule warnings.
+- Challenge progress and scaling milestones.
+- Journal completion reminders.
+- Goal reminders and progress updates.
+- Daily/weekly/monthly review reminders.
+- Import completion/failure notices.
+- Report generation triggers.
+- Suggested tags or categorisation (user approval where appropriate).
+Support goals and milestones for process, consistency, journaling, and performance. Provide notification preferences for type, severity, account scope, channel, enabled/disabled state, and quiet hours. Prevent duplicate or excessive notifications. Clearly distinguish local notifications from server-delivered notifications.
+19. SETTINGS, PERSONALISATION AND CUSTOMISATION
+Build a comprehensive settings system. Users should eventually be able to configure:
+- Profile, workspace, roles, and privacy.
+- Accounts, portfolios, brokers, prop firms, and platforms.
+- Base currency, display currency, timezone, date/time format, and trading sessions.
+- Asset classes, instruments, and instrument specifications.
+- Risk parameters and rule definitions.
+- Strategies, playbooks, setups, and mistake categories.
+- Trade-entry form sections, field order, field visibility, required/optional status, custom fields, and templates.
+- Dashboard metrics, widgets, layouts, and presets.
+- Saved filters, views, and reports.
+- Themes, colour palette, typography scale, density, and accessibility preferences.
+- Notifications, quiet hours, automation, and goals.
+- AI behaviour and review preferences.
+- Integrations, API connections, backups, and synchronisation.
+- Keyboard shortcuts and workflow preferences.
+Customisation must be data-driven and persist per user/workspace. Do not allow user configuration to bypass security, validation, or financial-calculation rules.
+20. VISUAL DESIGN AND USER EXPERIENCE
+Create a premium, institutional-style trading terminal with excellent information hierarchy. Use a refined dark theme as a strong default and provide a complete light theme. Use consistent design tokens for colours, typography, spacing, radii, borders, shadows, tables, forms, badges, charts, and status states.
+
+Design characteristics:
+- Clean, precise, high-information-density layouts without visual clutter.
+- Excellent readability for financial figures and tables.
+- Consistent positive/negative/neutral/warning/error visual semantics, with accessible contrast.
+- Responsive charts and tables; on mobile, use deliberate compact cards or controlled horizontal scrolling rather than broken layouts.
+- Fast page transitions and restrained animations that never impede data entry.
+- Clear form grouping, progressive disclosure, sensible defaults, autosave where safe, and unsaved-change protection.
+- Strong empty, loading, error, success, and permission states.
+- Keyboard navigation, visible focus, semantic controls, labels, and accessible chart summaries.
+Avoid excessive gradients, oversized cards, decorative animation, and charts that consume space without conveying useful information. Prioritise speed, accuracy, and practical usability.
+21. IMPLEMENTATION ROADMAP AND STAGE GATES
+The roadmap below is part of this single master specification. Implement only the stage explicitly requested by the user. The first run must execute Stage 0 only.
+STAGE 0 — INITIAL FOUNDATION BUILD (IMPLEMENT NOW)
+Build the real application foundation and a small, complete, working vertical slice.
+
+Implement:
+1. Inspect the AI Studio environment and configure the supported React/TypeScript and Node full-stack project.
+2. Set up Firebase Authentication and Firestore if the AI Studio integration is available; implement real authentication, protected routes, and user/workspace data isolation. Do not use fake login or pretend persistence.
+3. Establish the modular project structure, routing, typed domain models, repository abstraction, validation strategy, error handling, and central application state conventions.
+4. Establish the initial domain schema and relationships for User, Profile, Workspace, Portfolio, Account, Broker, PropFirm, Instrument, Trade, CashTransaction, and the future linked entities. It is acceptable to define future entities/interfaces without implementing all their workflows.
+5. Implement the responsive app shell, sidebar, top bar, workspace/account context, profile/settings entry points, reusable design system, and dark/light themes.
+6. Implement a real, persistent account workflow: create, view, edit, select, deactivate/archive accounts, and validate account inputs.
+7. Implement the initial dashboard using actual persisted account data: account overview, starting/current balance or verified snapshot, account count, basic trade count/P&L placeholders that clearly show no data yet, and account/date filter foundations. Do not hard-code metrics as if they were real.
+8. Implement explicit Demo Mode architecture with complete separation from real user data. Do not populate the real workspace with sample trades.
+9. Create central financial-calculation service contracts and implement only the minimum verified account/balance calculations required by the Stage 0 dashboard. Do not duplicate formulas in UI components.
+10. Create initial deterministic tests for authentication boundaries, workspace/user isolation, account CRUD, validation, and basic balance calculations.
+11. Add concise project documentation: architecture, folder structure, domain model, persistence/security decisions, financial conventions, tests, limitations, and next-stage roadmap.
+Stage 0 must not fully implement the advanced trade journal, full calculation engine, playbook engine, analytics suite, risk centre, prop-firm engine, psychology module, imports, AI coach, automation, or offline synchronisation. Prepare sound extension points only.
+Stage 0 acceptance criteria
+- The project builds and runs in the AI Studio preview.
+- Real authentication works, or a specific provisioning blocker is reported without substituting fake authentication.
+- Protected routes work.
+- User/workspace data isolation is enforced by backend/database rules, not just the UI.
+- Account creation, editing, selection, archiving, and persistence work end-to-end.
+- Dashboard values come from persisted data and reconcile with account records.
+- No fake live metrics or fake external connectivity are shown.
+- Dark/light themes and responsive layouts work.
+- No major console errors or broken navigation.
+- Stage 0 tests pass, or failures are reported precisely with remediation.
+- Documentation is updated.
+At the end of Stage 0, provide: implemented features, architecture decisions, files/modules changed, services provisioned, tests run and results, known limitations/blockers, and the exact recommended next stage. Stop. Do not begin Stage 1.

@@ -1,0 +1,720 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and persisted terminal preferences (PII isolated to owner).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 320,
+          "description": "Authenticated user email."
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User display name."
+        },
+        "photoUrl": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Optional user avatar URL."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["dark", "light"],
+          "maxLength": 10,
+          "description": "UI color theme preference."
+        },
+        "defaultCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 3,
+          "description": "Preferred display currency code."
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Preferred IANA timezone."
+        },
+        "activeWorkspaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Last selected workspace ID."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "theme", "defaultCurrency", "timezone", "createdAt", "updatedAt"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Top-level trading workspace container owned by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "baseCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 3
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "archived"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "baseCurrency", "timezone", "status", "createdAt", "updatedAt"]
+    },
+    "Portfolio": {
+      "title": "Portfolio",
+      "description": "Logical grouping of accounts inside a workspace.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "workspaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "baseCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 3
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "archived"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "workspaceId", "ownerId", "name", "baseCurrency", "status", "createdAt", "updatedAt"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Trading account record with broker/prop-firm configuration, starting balance, and optional verified snapshots.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "workspaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "portfolioId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "accountIdentifierMasked": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "accountType": {
+          "type": "string",
+          "enum": [
+            "personal_live",
+            "personal_demo",
+            "prop_evaluation",
+            "prop_verification",
+            "prop_funded",
+            "backtest",
+            "forward_test",
+            "paper",
+            "custom"
+          ],
+          "maxLength": 32
+        },
+        "customCategory": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "paused", "passed", "failed", "breached", "archived", "custom"],
+          "maxLength": 24
+        },
+        "brokerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "brokerName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "propFirmId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "propFirmName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "platformId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "platformName": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "baseCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 3
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "startingBalance": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "verifiedBalanceSnapshot": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "verifiedEquitySnapshot": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "snapshotAsOf": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "reconciliationNotes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "openingDate": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "challengePhase": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "profitTargetAmount": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "profitTargetPct": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,4})?$",
+          "maxLength": 16
+        },
+        "maxDailyLossAmount": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "maxDailyLossPct": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,4})?$",
+          "maxLength": 16
+        },
+        "maxOverallLossAmount": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "maxOverallLossPct": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,4})?$",
+          "maxLength": 16
+        },
+        "drawdownMode": {
+          "type": "string",
+          "enum": ["none", "static", "trailing_eod", "trailing_intraday", "custom"],
+          "maxLength": 24
+        },
+        "minTradingDays": {
+          "type": "integer"
+        },
+        "maxTradingDays": {
+          "type": "integer"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "tags": {
+          "type": "array",
+          "description": "Up to 10 account tags (each <= 40 chars)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "workspaceId",
+        "ownerId",
+        "name",
+        "accountType",
+        "status",
+        "baseCurrency",
+        "timezone",
+        "startingBalance",
+        "drawdownMode",
+        "tags",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CashTransaction": {
+      "title": "CashTransaction",
+      "description": "Non-trade ledger movement (deposit, withdrawal, prop payout, fee, adjustment, transfer).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "workspaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "accountId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "type": {
+          "type": "string",
+          "enum": ["deposit", "withdrawal", "payout", "fee", "adjustment", "transfer"],
+          "maxLength": 20
+        },
+        "amount": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "maxLength": 3
+        },
+        "grossAmount": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,8})?$",
+          "maxLength": 24
+        },
+        "splitPct": {
+          "type": "string",
+          "pattern": "^\\d+(\\.\\d{1,4})?$",
+          "maxLength": 16
+        },
+        "occurredAt": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "workspaceId", "accountId", "ownerId", "type", "amount", "currency", "occurredAt", "createdAt", "updatedAt"]
+    },
+    "BalanceSnapshot": {
+      "title": "BalanceSnapshot",
+      "description": "Timestamped verified account balance/equity snapshot and ledger reconciliation checkpoint.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "accountId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "balance": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "equity": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "capturedAt": { "type": "string", "maxLength": 40 },
+        "calculatedLedgerBalance": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "reconciliationDelta": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "reconciliationStatus": { "type": "string", "enum": ["reconciled", "discrepancy"], "maxLength": 24 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "workspaceId", "accountId", "ownerId", "balance", "capturedAt",
+        "calculatedLedgerBalance", "reconciliationDelta", "reconciliationStatus", "createdAt"
+      ]
+    },
+    "Broker": {
+      "title": "Broker",
+      "description": "Workspace-scoped broker reference record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "website": { "type": "string", "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["active", "archived"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "workspaceId", "ownerId", "name", "status", "createdAt", "updatedAt"]
+    },
+    "TradingPlatform": {
+      "title": "TradingPlatform",
+      "description": "Workspace-scoped trading platform reference record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "vendor": { "type": "string", "maxLength": 80 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["active", "archived"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "workspaceId", "ownerId", "name", "status", "createdAt", "updatedAt"]
+    },
+    "PropFirm": {
+      "title": "PropFirm",
+      "description": "Workspace-scoped proprietary trading firm reference record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "website": { "type": "string", "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["active", "archived"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "workspaceId", "ownerId", "name", "status", "createdAt", "updatedAt"]
+    },
+    "FXRateSnapshot": {
+      "title": "FXRateSnapshot",
+      "description": "Explicit user-recorded FX conversion rate snapshot for multi-currency consolidation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "baseCurrency": { "type": "string", "pattern": "^[A-Z]{3}$", "maxLength": 3 },
+        "quoteCurrency": { "type": "string", "pattern": "^[A-Z]{3}$", "maxLength": 3 },
+        "rate": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "capturedAt": { "type": "string", "maxLength": 40 },
+        "source": { "type": "string", "enum": ["manual", "historical_feed", "broker_report"], "maxLength": 24 },
+        "notes": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "workspaceId", "ownerId", "baseCurrency", "quoteCurrency", "rate", "capturedAt", "source", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable append-only audit trail for important workspace and account mutations.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "workspaceId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "ownerId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "entityType": {
+          "type": "string",
+          "enum": ["workspace", "portfolio", "account", "cash_transaction", "balance_snapshot", "broker", "platform", "prop_firm", "fx_rate", "instrument", "trade"],
+          "maxLength": 32
+        },
+        "entityId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "action": {
+          "type": "string",
+          "enum": ["create", "update", "archive", "restore", "reconcile", "delete"],
+          "maxLength": 24
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "workspaceId", "ownerId", "entityType", "entityId", "action", "summary", "createdAt"]
+    },
+    "InstrumentSpecification": {
+      "title": "InstrumentSpecification",
+      "description": "Workspace-scoped tradable instrument specification defining contract size, tick size, pip size, tick value, and currency conversion basis.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "symbol": { "type": "string", "pattern": "^[A-Z0-9._/\\-]+$", "minLength": 1, "maxLength": 32 },
+        "displayName": { "type": "string", "maxLength": 80 },
+        "assetClass": {
+          "type": "string",
+          "enum": ["forex", "indices", "commodities", "crypto", "equities", "futures", "options", "custom"],
+          "maxLength": 24
+        },
+        "baseCurrency": { "type": "string", "maxLength": 12 },
+        "quoteCurrency": { "type": "string", "pattern": "^[A-Z]{3}$", "maxLength": 3 },
+        "profitCurrency": { "type": "string", "pattern": "^[A-Z]{3}$", "maxLength": 3 },
+        "contractSize": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "tickSize": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "pipSize": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "tickValue": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "quantityUnit": {
+          "type": "string",
+          "enum": ["lots", "contracts", "shares", "units"],
+          "maxLength": 16
+        },
+        "status": { "type": "string", "enum": ["active", "archived"], "maxLength": 20 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "workspaceId", "ownerId", "symbol", "assetClass", "quoteCurrency",
+        "contractSize", "tickSize", "pipSize", "quantityUnit", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "Trade": {
+      "title": "Trade",
+      "description": "Workspace- and account-scoped trading journal entry with optional-by-default entry, risk, exit, and execution cost inputs.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "workspaceId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "portfolioId": { "type": "string", "maxLength": 128 },
+        "accountId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "ownerId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "externalTicketId": { "type": "string", "maxLength": 64 },
+        "symbol": { "type": "string", "pattern": "^[A-Z0-9._/\\-]+$", "minLength": 1, "maxLength": 32 },
+        "instrumentId": { "type": "string", "maxLength": 128 },
+        "direction": { "type": "string", "enum": ["long", "short"], "maxLength": 10 },
+        "status": { "type": "string", "enum": ["draft", "open", "closed"], "maxLength": 16 },
+        "isArchived": { "type": "boolean" },
+        "session": { "type": "string", "enum": ["asia", "london", "new_york", "overlap", "custom"], "maxLength": 16 },
+        "timeframes": { "type": "array", "description": "Up to 8 chart timeframes." },
+        "timezone": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "accountCurrency": { "type": "string", "pattern": "^[A-Z]{3}$", "maxLength": 3 },
+        "accountBalanceSnapshot": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "entryAt": { "type": "string", "maxLength": 40 },
+        "entryPrice": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "quantity": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "entryType": { "type": "string", "enum": ["market", "limit", "stop", "stop_limit", "scale_in", "custom"], "maxLength": 20 },
+        "leverage": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 16 },
+        "marginUsed": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "entryRationale": { "type": "string", "maxLength": 1000 },
+        "initialStopPrice": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "actualStopPrice": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "plannedTargetPrice": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "plannedRiskAmount": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "plannedRiskPct": { "type": "string", "pattern": "^\\d+(\\.\\d{1,4})?$", "maxLength": 16 },
+        "actualRiskAmount": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "exitAt": { "type": "string", "maxLength": 40 },
+        "exitPrice": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "exitQuantity": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "exitReason": { "type": "string", "maxLength": 500 },
+        "manualGrossPnl": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "fxConversionRate": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "playbookId": { "type": "string", "maxLength": 128 },
+        "setupId": { "type": "string", "maxLength": 128 },
+        "setupTag": { "type": "string", "maxLength": 80 },
+        "commission": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "swap": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "fees": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "slippage": { "type": "string", "pattern": "^-?\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "spread": { "type": "string", "pattern": "^\\d+(\\.\\d{1,8})?$", "maxLength": 24 },
+        "marketConditions": { "type": "array", "description": "Up to 16 market context tags." },
+        "entryNotes": { "type": "string", "maxLength": 1000 },
+        "reviewNotes": { "type": "string", "maxLength": 1500 },
+        "tags": { "type": "array", "description": "Up to 10 trade tags." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "workspaceId", "accountId", "ownerId", "symbol", "direction", "status",
+        "isArchived", "timeframes", "timezone", "accountCurrency", "marketConditions", "tags",
+        "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-only user profile and UI/account preferences."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Top-level workspace owned by authenticated user."
+    },
+    "/workspaces/{workspaceId}/portfolios/{portfolioId}": {
+      "schema": { "$ref": "#/entities/Portfolio" },
+      "description": "Portfolio groupings scoped to parent workspace."
+    },
+    "/workspaces/{workspaceId}/accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/Account" },
+      "description": "Trading accounts scoped to parent workspace."
+    },
+    "/workspaces/{workspaceId}/cashTransactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/CashTransaction" },
+      "description": "Cash movements (deposits, withdrawals, payouts, fees, adjustments) scoped to workspace and account."
+    },
+    "/workspaces/{workspaceId}/balanceSnapshots/{snapshotId}": {
+      "schema": { "$ref": "#/entities/BalanceSnapshot" },
+      "description": "Historical verified balance/equity snapshots and reconciliation checkpoints."
+    },
+    "/workspaces/{workspaceId}/brokers/{brokerId}": {
+      "schema": { "$ref": "#/entities/Broker" },
+      "description": "Workspace-scoped broker reference records."
+    },
+    "/workspaces/{workspaceId}/platforms/{platformId}": {
+      "schema": { "$ref": "#/entities/TradingPlatform" },
+      "description": "Workspace-scoped trading platform reference records."
+    },
+    "/workspaces/{workspaceId}/propFirms/{firmId}": {
+      "schema": { "$ref": "#/entities/PropFirm" },
+      "description": "Workspace-scoped proprietary firm reference records."
+    },
+    "/workspaces/{workspaceId}/fxRates/{rateId}": {
+      "schema": { "$ref": "#/entities/FXRateSnapshot" },
+      "description": "Workspace-scoped explicit FX rate snapshots for multi-currency rollups."
+    },
+    "/workspaces/{workspaceId}/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable append-only audit log entries for workspace activity."
+    },
+    "/workspaces/{workspaceId}/instruments/{instrumentId}": {
+      "schema": { "$ref": "#/entities/InstrumentSpecification" },
+      "description": "Workspace-scoped tradable instrument specifications."
+    },
+    "/workspaces/{workspaceId}/trades/{tradeId}": {
+      "schema": { "$ref": "#/entities/Trade" },
+      "description": "Workspace- and account-scoped trade journal entries."
+    }
+  }
+}

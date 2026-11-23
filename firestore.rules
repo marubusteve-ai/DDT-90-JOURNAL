@@ -1,0 +1,885 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Hardened Primitives
+    // -------------------------------------------------------------------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwnerUid(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidCurrency(code) {
+      return code is string && code.size() == 3 && code.matches('^[A-Z]{3}$');
+    }
+
+    function isValidSignedDecimal(val) {
+      return val is string && val.size() >= 1 && val.size() <= 24 && val.matches('^-?\\d+(\\.\\d{1,8})?$');
+    }
+
+    function isValidNonZeroSignedDecimal(val) {
+      return isValidSignedDecimal(val) && !val.matches('^-?0+(\\.0+)?$');
+    }
+
+    function isValidPositiveDecimal(val) {
+      return val is string && val.size() >= 1 && val.size() <= 24 && val.matches('^\\d+(\\.\\d{1,8})?$');
+    }
+
+    function isValidStrictlyPositiveDecimal(val) {
+      return isValidPositiveDecimal(val) && !val.matches('^0+(\\.0+)?$');
+    }
+
+    function isValidPctDecimal(val) {
+      return val is string && val.size() >= 1 && val.size() <= 16 && val.matches('^\\d+(\\.\\d{1,4})?$');
+    }
+
+    function isValidStringItem(item, minLen, maxLen) {
+      return item is string && item.size() >= minLen && item.size() <= maxLen;
+    }
+
+    function isValidStringListMax8(items, minLen, maxLen) {
+      return items is list && items.size() <= 8
+        && (items.size() <= 0 || isValidStringItem(items[0], minLen, maxLen))
+        && (items.size() <= 1 || isValidStringItem(items[1], minLen, maxLen))
+        && (items.size() <= 2 || isValidStringItem(items[2], minLen, maxLen))
+        && (items.size() <= 3 || isValidStringItem(items[3], minLen, maxLen))
+        && (items.size() <= 4 || isValidStringItem(items[4], minLen, maxLen))
+        && (items.size() <= 5 || isValidStringItem(items[5], minLen, maxLen))
+        && (items.size() <= 6 || isValidStringItem(items[6], minLen, maxLen))
+        && (items.size() <= 7 || isValidStringItem(items[7], minLen, maxLen));
+    }
+
+    function isValidStringListMax10(items, minLen, maxLen) {
+      return items is list && items.size() <= 10
+        && (items.size() <= 0 || isValidStringItem(items[0], minLen, maxLen))
+        && (items.size() <= 1 || isValidStringItem(items[1], minLen, maxLen))
+        && (items.size() <= 2 || isValidStringItem(items[2], minLen, maxLen))
+        && (items.size() <= 3 || isValidStringItem(items[3], minLen, maxLen))
+        && (items.size() <= 4 || isValidStringItem(items[4], minLen, maxLen))
+        && (items.size() <= 5 || isValidStringItem(items[5], minLen, maxLen))
+        && (items.size() <= 6 || isValidStringItem(items[6], minLen, maxLen))
+        && (items.size() <= 7 || isValidStringItem(items[7], minLen, maxLen))
+        && (items.size() <= 8 || isValidStringItem(items[8], minLen, maxLen))
+        && (items.size() <= 9 || isValidStringItem(items[9], minLen, maxLen));
+    }
+
+    function isValidStringListMax16(items, minLen, maxLen) {
+      return items is list && items.size() <= 16
+        && (items.size() <= 0 || isValidStringItem(items[0], minLen, maxLen))
+        && (items.size() <= 1 || isValidStringItem(items[1], minLen, maxLen))
+        && (items.size() <= 2 || isValidStringItem(items[2], minLen, maxLen))
+        && (items.size() <= 3 || isValidStringItem(items[3], minLen, maxLen))
+        && (items.size() <= 4 || isValidStringItem(items[4], minLen, maxLen))
+        && (items.size() <= 5 || isValidStringItem(items[5], minLen, maxLen))
+        && (items.size() <= 6 || isValidStringItem(items[6], minLen, maxLen))
+        && (items.size() <= 7 || isValidStringItem(items[7], minLen, maxLen))
+        && (items.size() <= 8 || isValidStringItem(items[8], minLen, maxLen))
+        && (items.size() <= 9 || isValidStringItem(items[9], minLen, maxLen))
+        && (items.size() <= 10 || isValidStringItem(items[10], minLen, maxLen))
+        && (items.size() <= 11 || isValidStringItem(items[11], minLen, maxLen))
+        && (items.size() <= 12 || isValidStringItem(items[12], minLen, maxLen))
+        && (items.size() <= 13 || isValidStringItem(items[13], minLen, maxLen))
+        && (items.size() <= 14 || isValidStringItem(items[14], minLen, maxLen))
+        && (items.size() <= 15 || isValidStringItem(items[15], minLen, maxLen));
+    }
+
+    function isWorkspaceOwner(workspaceId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/workspaces/$(workspaceId))
+        && get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+    }
+
+    function isOwnedPortfolio(workspaceId, portfolioId) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId)/portfolios/$(portfolioId))
+        && get(/databases/$(database)/documents/workspaces/$(workspaceId)/portfolios/$(portfolioId)).data.ownerId == request.auth.uid;
+    }
+
+    function isOwnedAccount(workspaceId, accountId) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId)/accounts/$(accountId))
+        && get(/databases/$(database)/documents/workspaces/$(workspaceId)/accounts/$(accountId)).data.ownerId == request.auth.uid;
+    }
+
+    function isOwnedInstrument(workspaceId, instrumentId) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId)/instruments/$(instrumentId))
+        && get(/databases/$(database)/documents/workspaces/$(workspaceId)/instruments/$(instrumentId)).data.ownerId == request.auth.uid;
+    }
+
+    // -------------------------------------------------------------------------
+    // Entity Validation Blueprints
+    // -------------------------------------------------------------------------
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'theme', 'defaultCurrency', 'timezone', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'photoUrl', 'theme', 'defaultCurrency', 'timezone', 'activeWorkspaceId', 'createdAt', 'updatedAt'])
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && isValidId(data.uid)
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+        && (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 320))
+        && (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 500))
+        && data.theme in ['dark', 'light']
+        && isValidCurrency(data.defaultCurrency)
+        && data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 64
+        && (!('activeWorkspaceId' in data) || data.activeWorkspaceId == null || isValidId(data.activeWorkspaceId))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspace(data, workspaceId) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'baseCurrency', 'timezone', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'description', 'baseCurrency', 'timezone', 'status', 'createdAt', 'updatedAt'])
+        && data.id == workspaceId
+        && isValidId(data.id)
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 300))
+        && isValidCurrency(data.baseCurrency)
+        && data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 64
+        && data.status in ['active', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPortfolio(data, workspaceId, portfolioId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'ownerId', 'name', 'baseCurrency', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'ownerId', 'name', 'description', 'baseCurrency', 'status', 'createdAt', 'updatedAt'])
+        && data.id == portfolioId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 300))
+        && isValidCurrency(data.baseCurrency)
+        && data.status in ['active', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAccount(data, workspaceId, accountId) {
+      return data.keys().hasAll([
+          'id', 'workspaceId', 'ownerId', 'name', 'accountType', 'status',
+          'baseCurrency', 'timezone', 'startingBalance', 'drawdownMode', 'tags',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'workspaceId', 'portfolioId', 'ownerId', 'name', 'accountIdentifierMasked',
+          'accountType', 'customCategory', 'status', 'brokerId', 'brokerName',
+          'propFirmId', 'propFirmName', 'platformId', 'platformName',
+          'baseCurrency', 'timezone', 'startingBalance', 'verifiedBalanceSnapshot',
+          'verifiedEquitySnapshot', 'snapshotAsOf', 'reconciliationNotes', 'openingDate',
+          'challengePhase', 'profitTargetAmount', 'profitTargetPct', 'maxDailyLossAmount',
+          'maxDailyLossPct', 'maxOverallLossAmount', 'maxOverallLossPct', 'drawdownMode',
+          'minTradingDays', 'maxTradingDays', 'notes', 'tags', 'createdAt', 'updatedAt'
+        ])
+        && data.id == accountId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && (!('portfolioId' in data) || data.portfolioId == null || data.portfolioId == '' || isValidId(data.portfolioId))
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('accountIdentifierMasked' in data) || data.accountIdentifierMasked == null || (data.accountIdentifierMasked is string && data.accountIdentifierMasked.size() <= 32))
+        && data.accountType in [
+          'personal_live', 'personal_demo', 'prop_evaluation', 'prop_verification',
+          'prop_funded', 'backtest', 'forward_test', 'paper', 'custom'
+        ]
+        && (!('customCategory' in data) || data.customCategory == null || (data.customCategory is string && data.customCategory.size() <= 60))
+        && data.status in ['active', 'paused', 'passed', 'failed', 'breached', 'archived', 'custom']
+        && (!('brokerId' in data) || data.brokerId == null || data.brokerId == '' || isValidId(data.brokerId))
+        && (!('brokerName' in data) || data.brokerName == null || (data.brokerName is string && data.brokerName.size() <= 80))
+        && (!('propFirmId' in data) || data.propFirmId == null || data.propFirmId == '' || isValidId(data.propFirmId))
+        && (!('propFirmName' in data) || data.propFirmName == null || (data.propFirmName is string && data.propFirmName.size() <= 80))
+        && (!('platformId' in data) || data.platformId == null || data.platformId == '' || isValidId(data.platformId))
+        && (!('platformName' in data) || data.platformName == null || (data.platformName is string && data.platformName.size() <= 64))
+        && isValidCurrency(data.baseCurrency)
+        && data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 64
+        && isValidPositiveDecimal(data.startingBalance)
+        && (!('verifiedBalanceSnapshot' in data) || data.verifiedBalanceSnapshot == null || isValidSignedDecimal(data.verifiedBalanceSnapshot))
+        && (!('verifiedEquitySnapshot' in data) || data.verifiedEquitySnapshot == null || isValidSignedDecimal(data.verifiedEquitySnapshot))
+        && (!('snapshotAsOf' in data) || data.snapshotAsOf == null || (data.snapshotAsOf is string && data.snapshotAsOf.size() <= 40))
+        && (!('reconciliationNotes' in data) || data.reconciliationNotes == null || (data.reconciliationNotes is string && data.reconciliationNotes.size() <= 500))
+        && (!('openingDate' in data) || data.openingDate == null || (data.openingDate is string && data.openingDate.size() <= 32))
+        && (!('challengePhase' in data) || data.challengePhase == null || (data.challengePhase is string && data.challengePhase.size() <= 40))
+        && (!('profitTargetAmount' in data) || data.profitTargetAmount == null || isValidPositiveDecimal(data.profitTargetAmount))
+        && (!('profitTargetPct' in data) || data.profitTargetPct == null || isValidPctDecimal(data.profitTargetPct))
+        && (!('maxDailyLossAmount' in data) || data.maxDailyLossAmount == null || isValidPositiveDecimal(data.maxDailyLossAmount))
+        && (!('maxDailyLossPct' in data) || data.maxDailyLossPct == null || isValidPctDecimal(data.maxDailyLossPct))
+        && (!('maxOverallLossAmount' in data) || data.maxOverallLossAmount == null || isValidPositiveDecimal(data.maxOverallLossAmount))
+        && (!('maxOverallLossPct' in data) || data.maxOverallLossPct == null || isValidPctDecimal(data.maxOverallLossPct))
+        && data.drawdownMode in ['none', 'static', 'trailing_eod', 'trailing_intraday', 'custom']
+        && (!('minTradingDays' in data) || data.minTradingDays == null || (data.minTradingDays is int && data.minTradingDays >= 0 && data.minTradingDays <= 3650))
+        && (!('maxTradingDays' in data) || data.maxTradingDays == null || (data.maxTradingDays is int && data.maxTradingDays >= 0 && data.maxTradingDays <= 3650))
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 1000))
+        && isValidStringListMax10(data.tags, 1, 40)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCashTransaction(data, workspaceId, transactionId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'accountId', 'ownerId', 'type', 'amount', 'currency', 'occurredAt', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'accountId', 'ownerId', 'type', 'amount', 'currency', 'grossAmount', 'splitPct', 'occurredAt', 'notes', 'createdAt', 'updatedAt'])
+        && data.id == transactionId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && isValidId(data.accountId)
+        && data.ownerId == request.auth.uid
+        && data.type in ['deposit', 'withdrawal', 'payout', 'fee', 'adjustment', 'transfer']
+        && isValidNonZeroSignedDecimal(data.amount)
+        && isValidCurrency(data.currency)
+        && (!('grossAmount' in data) || data.grossAmount == null || isValidPositiveDecimal(data.grossAmount))
+        && (!('splitPct' in data) || data.splitPct == null || isValidPctDecimal(data.splitPct))
+        && data.occurredAt is string && data.occurredAt.size() >= 1 && data.occurredAt.size() <= 40
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBalanceSnapshot(data, workspaceId, snapshotId) {
+      return data.keys().hasAll([
+          'id', 'workspaceId', 'accountId', 'ownerId', 'balance', 'capturedAt',
+          'calculatedLedgerBalance', 'reconciliationDelta', 'reconciliationStatus', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'workspaceId', 'accountId', 'ownerId', 'balance', 'equity', 'capturedAt',
+          'calculatedLedgerBalance', 'reconciliationDelta', 'reconciliationStatus', 'notes', 'createdAt'
+        ])
+        && data.id == snapshotId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && isValidId(data.accountId)
+        && data.ownerId == request.auth.uid
+        && isValidSignedDecimal(data.balance)
+        && (!('equity' in data) || data.equity == null || isValidSignedDecimal(data.equity))
+        && data.capturedAt is string && data.capturedAt.size() >= 1 && data.capturedAt.size() <= 40
+        && isValidSignedDecimal(data.calculatedLedgerBalance)
+        && isValidSignedDecimal(data.reconciliationDelta)
+        && data.reconciliationStatus in ['reconciled', 'discrepancy']
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidBroker(data, workspaceId, brokerId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'ownerId', 'name', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'ownerId', 'name', 'website', 'notes', 'status', 'createdAt', 'updatedAt'])
+        && data.id == brokerId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('website' in data) || data.website == null || (data.website is string && data.website.size() <= 200))
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500))
+        && data.status in ['active', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTradingPlatform(data, workspaceId, platformId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'ownerId', 'name', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'ownerId', 'name', 'vendor', 'notes', 'status', 'createdAt', 'updatedAt'])
+        && data.id == platformId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('vendor' in data) || data.vendor == null || (data.vendor is string && data.vendor.size() <= 80))
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500))
+        && data.status in ['active', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPropFirm(data, workspaceId, firmId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'ownerId', 'name', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'ownerId', 'name', 'website', 'notes', 'status', 'createdAt', 'updatedAt'])
+        && data.id == firmId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('website' in data) || data.website == null || (data.website is string && data.website.size() <= 200))
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500))
+        && data.status in ['active', 'archived']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFXRateSnapshot(data, workspaceId, rateId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'ownerId', 'baseCurrency', 'quoteCurrency', 'rate', 'capturedAt', 'source', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'ownerId', 'baseCurrency', 'quoteCurrency', 'rate', 'capturedAt', 'source', 'notes', 'createdAt', 'updatedAt'])
+        && data.id == rateId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && isValidCurrency(data.baseCurrency)
+        && isValidCurrency(data.quoteCurrency)
+        && data.baseCurrency != data.quoteCurrency
+        && isValidStrictlyPositiveDecimal(data.rate)
+        && data.capturedAt is string && data.capturedAt.size() >= 1 && data.capturedAt.size() <= 40
+        && data.source in ['manual', 'historical_feed', 'broker_report']
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 300))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAuditLog(data, workspaceId, logId) {
+      return data.keys().hasAll(['id', 'workspaceId', 'ownerId', 'entityType', 'entityId', 'action', 'summary', 'createdAt'])
+        && data.keys().hasOnly(['id', 'workspaceId', 'ownerId', 'entityType', 'entityId', 'action', 'summary', 'createdAt'])
+        && data.id == logId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && data.entityType in ['workspace', 'portfolio', 'account', 'cash_transaction', 'balance_snapshot', 'broker', 'platform', 'prop_firm', 'fx_rate', 'instrument', 'trade']
+        && isValidId(data.entityId)
+        && data.action in ['create', 'update', 'archive', 'restore', 'reconcile', 'delete']
+        && data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 240
+        && data.createdAt is timestamp;
+    }
+
+    function isValidSymbol(val) {
+      return val is string && val.size() >= 1 && val.size() <= 32 && val.matches('^[A-Z0-9._/\\-]+$');
+    }
+
+    function isValidInstrumentSpecification(data, workspaceId, instrumentId) {
+      return data.keys().hasAll([
+          'id', 'workspaceId', 'ownerId', 'symbol', 'assetClass', 'quoteCurrency',
+          'contractSize', 'tickSize', 'pipSize', 'quantityUnit', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'workspaceId', 'ownerId', 'symbol', 'displayName', 'assetClass',
+          'baseCurrency', 'quoteCurrency', 'profitCurrency', 'contractSize', 'tickSize',
+          'pipSize', 'tickValue', 'quantityUnit', 'status', 'notes', 'createdAt', 'updatedAt'
+        ])
+        && data.id == instrumentId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && data.ownerId == request.auth.uid
+        && isValidSymbol(data.symbol)
+        && (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 80))
+        && data.assetClass in ['forex', 'indices', 'commodities', 'crypto', 'equities', 'futures', 'options', 'custom']
+        && (!('baseCurrency' in data) || data.baseCurrency == null || (data.baseCurrency is string && data.baseCurrency.size() <= 12))
+        && isValidCurrency(data.quoteCurrency)
+        && (!('profitCurrency' in data) || data.profitCurrency == null || isValidCurrency(data.profitCurrency))
+        && isValidStrictlyPositiveDecimal(data.contractSize)
+        && isValidStrictlyPositiveDecimal(data.tickSize)
+        && isValidStrictlyPositiveDecimal(data.pipSize)
+        && (!('tickValue' in data) || data.tickValue == null || isValidStrictlyPositiveDecimal(data.tickValue))
+        && data.quantityUnit in ['lots', 'contracts', 'shares', 'units']
+        && data.status in ['active', 'archived']
+        && (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTrade(data, workspaceId, tradeId) {
+      return data.keys().hasAll([
+          'id', 'workspaceId', 'accountId', 'ownerId', 'symbol', 'direction', 'status',
+          'isArchived', 'timeframes', 'timezone', 'accountCurrency', 'marketConditions',
+          'tags', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'workspaceId', 'portfolioId', 'accountId', 'ownerId', 'externalTicketId',
+          'symbol', 'instrumentId', 'direction', 'status', 'isArchived', 'session',
+          'timeframes', 'timezone', 'accountCurrency', 'accountBalanceSnapshot',
+          'entryAt', 'entryPrice', 'quantity', 'entryType', 'leverage', 'marginUsed', 'entryRationale',
+          'initialStopPrice', 'actualStopPrice', 'plannedTargetPrice', 'plannedRiskAmount', 'plannedRiskPct', 'actualRiskAmount',
+          'exitAt', 'exitPrice', 'exitQuantity', 'exitReason', 'manualGrossPnl', 'fxConversionRate',
+          'playbookId', 'setupId', 'setupTag',
+          'commission', 'swap', 'fees', 'slippage', 'spread',
+          'marketConditions', 'entryNotes', 'reviewNotes', 'tags', 'createdAt', 'updatedAt'
+        ])
+        && data.id == tradeId
+        && data.workspaceId == workspaceId
+        && isValidId(data.id)
+        && isValidId(data.workspaceId)
+        && isValidId(data.accountId)
+        && data.ownerId == request.auth.uid
+        && (!('portfolioId' in data) || data.portfolioId == null || data.portfolioId == '' || isValidId(data.portfolioId))
+        && (!('externalTicketId' in data) || data.externalTicketId == null || (data.externalTicketId is string && data.externalTicketId.size() <= 64))
+        && isValidSymbol(data.symbol)
+        && (!('instrumentId' in data) || data.instrumentId == null || data.instrumentId == '' || isValidId(data.instrumentId))
+        && data.direction in ['long', 'short']
+        && data.status in ['draft', 'open', 'closed']
+        && data.isArchived is bool
+        && (!('session' in data) || data.session == null || data.session in ['asia', 'london', 'new_york', 'overlap', 'custom'])
+        && isValidStringListMax8(data.timeframes, 1, 16)
+        && data.timezone is string && data.timezone.size() >= 1 && data.timezone.size() <= 64
+        && isValidCurrency(data.accountCurrency)
+        && (!('accountBalanceSnapshot' in data) || data.accountBalanceSnapshot == null || isValidStrictlyPositiveDecimal(data.accountBalanceSnapshot))
+        && (!('entryAt' in data) || data.entryAt == null || (data.entryAt is string && data.entryAt.size() <= 40))
+        && (!('entryPrice' in data) || data.entryPrice == null || isValidStrictlyPositiveDecimal(data.entryPrice))
+        && (!('quantity' in data) || data.quantity == null || isValidStrictlyPositiveDecimal(data.quantity))
+        && (!('entryType' in data) || data.entryType == null || data.entryType in ['market', 'limit', 'stop', 'stop_limit', 'scale_in', 'custom'])
+        && (!('leverage' in data) || data.leverage == null || isValidStrictlyPositiveDecimal(data.leverage))
+        && (!('marginUsed' in data) || data.marginUsed == null || isValidPositiveDecimal(data.marginUsed))
+        && (!('entryRationale' in data) || data.entryRationale == null || (data.entryRationale is string && data.entryRationale.size() <= 1000))
+        && (!('initialStopPrice' in data) || data.initialStopPrice == null || isValidStrictlyPositiveDecimal(data.initialStopPrice))
+        && (!('actualStopPrice' in data) || data.actualStopPrice == null || isValidStrictlyPositiveDecimal(data.actualStopPrice))
+        && (!('plannedTargetPrice' in data) || data.plannedTargetPrice == null || isValidStrictlyPositiveDecimal(data.plannedTargetPrice))
+        && (!('plannedRiskAmount' in data) || data.plannedRiskAmount == null || isValidPositiveDecimal(data.plannedRiskAmount))
+        && (!('plannedRiskPct' in data) || data.plannedRiskPct == null || isValidPctDecimal(data.plannedRiskPct))
+        && (!('actualRiskAmount' in data) || data.actualRiskAmount == null || isValidPositiveDecimal(data.actualRiskAmount))
+        && (!('exitAt' in data) || data.exitAt == null || (data.exitAt is string && data.exitAt.size() <= 40))
+        && (!('exitPrice' in data) || data.exitPrice == null || isValidStrictlyPositiveDecimal(data.exitPrice))
+        && (!('exitQuantity' in data) || data.exitQuantity == null || isValidStrictlyPositiveDecimal(data.exitQuantity))
+        && (!('exitReason' in data) || data.exitReason == null || (data.exitReason is string && data.exitReason.size() <= 500))
+        && (!('manualGrossPnl' in data) || data.manualGrossPnl == null || isValidSignedDecimal(data.manualGrossPnl))
+        && (!('fxConversionRate' in data) || data.fxConversionRate == null || isValidStrictlyPositiveDecimal(data.fxConversionRate))
+        && (!('playbookId' in data) || data.playbookId == null)
+        && (!('setupId' in data) || data.setupId == null)
+        && (!('setupTag' in data) || data.setupTag == null || (data.setupTag is string && data.setupTag.size() <= 80))
+        && (!('commission' in data) || data.commission == null || isValidSignedDecimal(data.commission))
+        && (!('swap' in data) || data.swap == null || isValidSignedDecimal(data.swap))
+        && (!('fees' in data) || data.fees == null || isValidSignedDecimal(data.fees))
+        && (!('slippage' in data) || data.slippage == null || isValidSignedDecimal(data.slippage))
+        && (!('spread' in data) || data.spread == null || isValidPositiveDecimal(data.spread))
+        && isValidStringListMax16(data.marketConditions, 1, 40)
+        && (!('entryNotes' in data) || data.entryNotes == null || (data.entryNotes is string && data.entryNotes.size() <= 1000))
+        && (!('reviewNotes' in data) || data.reviewNotes == null || (data.reviewNotes is string && data.reviewNotes.size() <= 1500))
+        && isValidStringListMax10(data.tags, 1, 40)
+        && (data.status != 'closed' || (('exitPrice' in data && data.exitPrice != null) || ('manualGrossPnl' in data && data.manualGrossPnl != null)))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwnerUid(userId);
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwnerUid(userId)
+        && isValidUserProfile(incoming(), userId)
+        && (!('email' in incoming()) || incoming().email == null || (('email' in request.auth.token) && incoming().email == request.auth.token.email))
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (!('activeWorkspaceId' in incoming()) || incoming().activeWorkspaceId == null || isWorkspaceOwner(incoming().activeWorkspaceId));
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwnerUid(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'email', 'photoUrl', 'theme', 'defaultCurrency',
+          'timezone', 'activeWorkspaceId', 'updatedAt'
+        ])
+        && (!('email' in incoming()) || incoming().email == null || (('email' in existing()) && incoming().email == existing().email) || (('email' in request.auth.token) && incoming().email == request.auth.token.email))
+        && (!('activeWorkspaceId' in incoming()) || incoming().activeWorkspaceId == null || (('activeWorkspaceId' in existing()) && incoming().activeWorkspaceId == existing().activeWorkspaceId) || isWorkspaceOwner(incoming().activeWorkspaceId));
+      allow delete: if false;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow get: if isValidId(workspaceId) && isSignedIn() && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(workspaceId)
+        && isValidWorkspace(incoming(), workspaceId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(workspaceId)
+        && existing().ownerId == request.auth.uid
+        && isValidWorkspace(incoming(), workspaceId)
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'baseCurrency', 'timezone', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        );
+      allow delete: if false;
+
+      match /portfolios/{portfolioId} {
+        allow get: if isValidId(workspaceId) && isValidId(portfolioId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(portfolioId)
+          && isValidPortfolio(incoming(), workspaceId, portfolioId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(portfolioId)
+          && existing().ownerId == request.auth.uid
+          && isValidPortfolio(incoming(), workspaceId, portfolioId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'baseCurrency', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(portfolioId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /accounts/{accountId} {
+        allow get: if isValidId(workspaceId) && isValidId(accountId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(accountId)
+          && isValidAccount(incoming(), workspaceId, accountId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId)
+          && (!('portfolioId' in incoming()) || incoming().portfolioId == null || incoming().portfolioId == '' || isOwnedPortfolio(workspaceId, incoming().portfolioId));
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(accountId)
+          && existing().ownerId == request.auth.uid
+          && isValidAccount(incoming(), workspaceId, accountId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'portfolioId', 'name', 'accountIdentifierMasked', 'accountType', 'customCategory',
+              'status', 'brokerId', 'brokerName', 'propFirmId', 'propFirmName', 'platformId',
+              'platformName', 'baseCurrency', 'timezone', 'startingBalance',
+              'verifiedBalanceSnapshot', 'verifiedEquitySnapshot', 'snapshotAsOf',
+              'reconciliationNotes', 'openingDate', 'challengePhase', 'profitTargetAmount',
+              'profitTargetPct', 'maxDailyLossAmount', 'maxDailyLossPct',
+              'maxOverallLossAmount', 'maxOverallLossPct', 'drawdownMode',
+              'minTradingDays', 'maxTradingDays', 'notes', 'tags', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['portfolioId', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'verifiedBalanceSnapshot', 'verifiedEquitySnapshot', 'snapshotAsOf',
+              'reconciliationNotes', 'updatedAt'
+            ])
+          )
+          && isWorkspaceOwner(workspaceId)
+          && (!('portfolioId' in incoming()) || incoming().portfolioId == null || incoming().portfolioId == '' || (('portfolioId' in existing()) && incoming().portfolioId == existing().portfolioId) || isOwnedPortfolio(workspaceId, incoming().portfolioId));
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(accountId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /cashTransactions/{transactionId} {
+        allow get: if isValidId(workspaceId) && isValidId(transactionId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(transactionId)
+          && isValidCashTransaction(incoming(), workspaceId, transactionId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId)
+          && isOwnedAccount(workspaceId, incoming().accountId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(transactionId)
+          && existing().ownerId == request.auth.uid
+          && isValidCashTransaction(incoming(), workspaceId, transactionId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().accountId == existing().accountId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'type', 'amount', 'currency', 'grossAmount', 'splitPct', 'occurredAt', 'notes', 'updatedAt'
+          ])
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(transactionId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /balanceSnapshots/{snapshotId} {
+        allow get: if isValidId(workspaceId) && isValidId(snapshotId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(snapshotId)
+          && isValidBalanceSnapshot(incoming(), workspaceId, snapshotId)
+          && incoming().createdAt == request.time
+          && isWorkspaceOwner(workspaceId)
+          && isOwnedAccount(workspaceId, incoming().accountId);
+        allow update: if false;
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(snapshotId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /brokers/{brokerId} {
+        allow get: if isValidId(workspaceId) && isValidId(brokerId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(brokerId)
+          && isValidBroker(incoming(), workspaceId, brokerId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(brokerId)
+          && existing().ownerId == request.auth.uid
+          && isValidBroker(incoming(), workspaceId, brokerId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'website', 'notes', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(brokerId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /platforms/{platformId} {
+        allow get: if isValidId(workspaceId) && isValidId(platformId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(platformId)
+          && isValidTradingPlatform(incoming(), workspaceId, platformId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(platformId)
+          && existing().ownerId == request.auth.uid
+          && isValidTradingPlatform(incoming(), workspaceId, platformId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'vendor', 'notes', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(platformId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /propFirms/{firmId} {
+        allow get: if isValidId(workspaceId) && isValidId(firmId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(firmId)
+          && isValidPropFirm(incoming(), workspaceId, firmId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(firmId)
+          && existing().ownerId == request.auth.uid
+          && isValidPropFirm(incoming(), workspaceId, firmId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'website', 'notes', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(firmId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /fxRates/{rateId} {
+        allow get: if isValidId(workspaceId) && isValidId(rateId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(rateId)
+          && isValidFXRateSnapshot(incoming(), workspaceId, rateId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(rateId)
+          && existing().ownerId == request.auth.uid
+          && isValidFXRateSnapshot(incoming(), workspaceId, rateId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'rate', 'capturedAt', 'source', 'notes', 'updatedAt'
+          ])
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(rateId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /auditLogs/{logId} {
+        allow get: if isValidId(workspaceId) && isValidId(logId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(logId)
+          && isValidAuditLog(incoming(), workspaceId, logId)
+          && incoming().createdAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /instruments/{instrumentId} {
+        allow get: if isValidId(workspaceId) && isValidId(instrumentId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(instrumentId)
+          && isValidInstrumentSpecification(incoming(), workspaceId, instrumentId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId);
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(instrumentId)
+          && existing().ownerId == request.auth.uid
+          && isValidInstrumentSpecification(incoming(), workspaceId, instrumentId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'symbol', 'displayName', 'assetClass', 'baseCurrency', 'quoteCurrency', 'profitCurrency',
+              'contractSize', 'tickSize', 'pipSize', 'tickValue', 'quantityUnit', 'notes', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
+          && isWorkspaceOwner(workspaceId);
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(instrumentId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+
+      match /trades/{tradeId} {
+        allow get: if isValidId(workspaceId) && isValidId(tradeId) && isWorkspaceOwner(workspaceId);
+        allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(tradeId)
+          && isValidTrade(incoming(), workspaceId, tradeId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && isWorkspaceOwner(workspaceId)
+          && isOwnedAccount(workspaceId, incoming().accountId)
+          && (!('portfolioId' in incoming()) || incoming().portfolioId == null || incoming().portfolioId == '' || isOwnedPortfolio(workspaceId, incoming().portfolioId))
+          && (!('instrumentId' in incoming()) || incoming().instrumentId == null || incoming().instrumentId == '' || isOwnedInstrument(workspaceId, incoming().instrumentId));
+        allow update: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(tradeId)
+          && existing().ownerId == request.auth.uid
+          && isValidTrade(incoming(), workspaceId, tradeId)
+          && incoming().id == existing().id
+          && incoming().workspaceId == existing().workspaceId
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'portfolioId', 'accountId', 'externalTicketId', 'symbol', 'instrumentId', 'direction',
+              'status', 'isArchived', 'session', 'timeframes', 'timezone', 'accountCurrency',
+              'accountBalanceSnapshot', 'entryAt', 'entryPrice', 'quantity', 'entryType',
+              'leverage', 'marginUsed', 'entryRationale', 'initialStopPrice', 'actualStopPrice',
+              'plannedTargetPrice', 'plannedRiskAmount', 'plannedRiskPct', 'actualRiskAmount',
+              'exitAt', 'exitPrice', 'exitQuantity', 'exitReason', 'manualGrossPnl',
+              'fxConversionRate', 'setupTag', 'commission', 'swap',
+              'fees', 'slippage', 'spread', 'marketConditions', 'entryNotes', 'reviewNotes',
+              'tags', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['isArchived', 'updatedAt'])
+          )
+          && isWorkspaceOwner(workspaceId)
+          && isOwnedAccount(workspaceId, incoming().accountId)
+          && (!('portfolioId' in incoming()) || incoming().portfolioId == null || incoming().portfolioId == '' || (('portfolioId' in existing()) && incoming().portfolioId == existing().portfolioId) || isOwnedPortfolio(workspaceId, incoming().portfolioId))
+          && (!('instrumentId' in incoming()) || incoming().instrumentId == null || incoming().instrumentId == '' || (('instrumentId' in existing()) && incoming().instrumentId == existing().instrumentId) || isOwnedInstrument(workspaceId, incoming().instrumentId));
+        allow delete: if isVerifiedUser()
+          && isValidId(workspaceId)
+          && isValidId(tradeId)
+          && existing().ownerId == request.auth.uid
+          && isWorkspaceOwner(workspaceId);
+      }
+    }
+  }
+}

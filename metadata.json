@@ -1,0 +1,6 @@
+{
+  "name": "Meridian Desk",
+  "description": "Personal trading journal and trading performance operating system for multi-account, multi-broker, and prop-firm workflows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
